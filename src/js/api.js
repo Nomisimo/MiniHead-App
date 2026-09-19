@@ -18,6 +18,7 @@ export function getBaseUrl() {
 
 // Core fetch wrapper — throws on network error or non-2xx response.
 async function _fetch(method, path, body) {
+  if (!_baseUrl) throw new Error('Not connected');
   const opts = {
     method,
     headers: body ? { 'Content-Type': 'application/json' } : {},
