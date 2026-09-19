@@ -42,7 +42,7 @@ export function initControls() {
   function _sendColor() {
     const r = faderR.getValue(), g = faderG.getValue();
     const b = faderB.getValue(), w = faderW.getValue();
-    api.send(`COLOR:${r},${g},${b},${w}`, _targets).catch(console.warn);
+    api.send(`R:${r},G:${g},B:${b},W:${w}`, _targets).catch(console.warn);
   }
 
   // Pan / Tilt

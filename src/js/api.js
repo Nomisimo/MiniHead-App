@@ -40,7 +40,8 @@ export const api = {
   // Heads
   heads:    ()      => _fetch('GET',  '/api/heads'),
   fixtures: ()      => _fetch('GET',  '/api/fixtures'),
-  identify: (mac)   => _fetch('POST', `/api/heads/${mac}/identify`),
+  identify:    (mac) => _fetch('POST', `/api/heads/${mac}/identify`, { on: true }),
+  identifyOff: (mac) => _fetch('POST', `/api/heads/${mac}/identify`, { on: false }),
   setName:  (mac, name)   => _fetch('POST', `/api/heads/${mac}/name`,  { name }),
   setFixID: (mac, fixID)  => _fetch('POST', `/api/heads/${mac}/fixid`, { fixID }),
 
@@ -56,8 +57,8 @@ export const api = {
   // Cues
   getCues:    ()        => _fetch('GET',    '/api/cues'),
   createCue:  (cue)     => _fetch('POST',   '/api/cues', cue),
-  fireCue:    (id)      => _fetch('POST',   `/api/cues/${id}`),
-  updateCue:  (id, data)=> _fetch('PUT',    `/api/cues/${id}`, data),
+  fireCue:    (id)      => _fetch('POST',   `/api/cues/${id}/fire`),
+  updateCue:  (id, data)=> _fetch('PUT',    `/api/cues/${id}/update`, data),
   deleteCue:  (id)      => _fetch('DELETE', `/api/cues/${id}`),
   reorderCues:(order)   => _fetch('PUT',    '/api/cues/reorder', { order }),
 

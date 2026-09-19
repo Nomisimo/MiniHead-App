@@ -19,7 +19,9 @@ let _activeScreen = 'controls';
 
 export function showScreen(name) {
   screens.forEach(s => {
-    document.getElementById(`screen-${s}`).hidden = (s !== name);
+    const el = document.getElementById(`screen-${s}`);
+    el.hidden = (s !== name);
+    el.style.overflowY = (s === name) ? 'auto' : 'hidden';
   });
   document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.screen === name);

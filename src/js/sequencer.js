@@ -148,12 +148,8 @@ function _startPoll(cueList, statusBar) {
       document.getElementById('seq-start-btn').textContent = '▶ Start';
       document.getElementById('seq-start-btn').classList.remove('btn--active');
       statusBar.textContent = '';
+    } else {
+      statusBar.textContent = 'Running…';
     }
-    cueList.querySelectorAll('.seq-step').forEach(step => {
-      step.classList.toggle('active', parseInt(step.dataset.id) === s.current_cue_id);
-    });
-    statusBar.textContent = s.running
-      ? `Step ${s.step_index + 1} of ${s.total_steps}`
-      : '';
   }, 1000);
 }

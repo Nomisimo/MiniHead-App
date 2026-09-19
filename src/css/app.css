@@ -39,6 +39,8 @@
   --text-dim: #666;
 }
 
+[hidden] { display: none !important; }
+
 *, *::before, *::after {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;

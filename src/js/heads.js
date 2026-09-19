@@ -42,7 +42,7 @@ async function _render(list) {
 
 function _makeCard(h) {
   const mac      = h.mac || h.ip;
-  const isLeader = h.role === 'leader';
+  const isLeader = h.role === 'LEADER';
   const isOnline = h.online !== false;
 
   const card = document.createElement('div');
@@ -67,6 +67,7 @@ function _makeCard(h) {
   btnID.addEventListener('click', e => {
     e.stopPropagation();
     api.identify(mac).catch(console.warn);
+    setTimeout(() => api.identifyOff(mac).catch(console.warn), 1500);
   });
 
   hdr.append(dot, info, btnID);
@@ -134,7 +135,7 @@ function _makeExpand(h, mac) {
     sendPending = setTimeout(() => {
       const r = fR.getValue(), g = fG.getValue();
       const b = fB.getValue(), w = fW.getValue();
-      api.send(`COLOR:${r},${g},${b},${w}`, [mac]).catch(console.warn);
+      api.send(`R:${r},G:${g},B:${b},W:${w}`, [mac]).catch(console.warn);
     }, 30);
   };
 

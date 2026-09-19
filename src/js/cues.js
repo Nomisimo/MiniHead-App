@@ -1,4 +1,5 @@
-// cues.js — cue list: fire, create, edit, delete, reorder
+// cues.js — cue list: fire, create, delete
+// Note: firmware PUT /api/cues/* only updates fixTargets — rename not supported.
 import { api } from './api.js';
 
 export function initCues() {
@@ -26,14 +27,14 @@ async function _render(list) {
   let cues = [];
   try {
     const data = await api.getCues();
-    cues = data.cues || data || [];
+    cues = Array.isArray(data) ? data : (data.cues || []);
   } catch (_) {
     list.innerHTML = '<p class="empty-state">Could not load cues.</p>';
     return;
   }
 
   if (cues.length === 0) {
-    list.innerHTML = '<p class="empty-state">No cues yet. Tap + New to capture the current state.</p>';
+    list.innerHTML = '<p class="empty-state">No cues yet. Tap + New to save the current state.</p>';
     return;
   }
 
@@ -57,18 +58,15 @@ function _makeItem(cue, list) {
   btnFire.className = 'btn btn--icon btn--primary';
   btnFire.title = 'Fire';
   btnFire.textContent = '▶';
-  btnFire.addEventListener('click', () => {
-    api.fireCue(cue.id).catch(console.warn);
-    // Visual feedback
-    item.style.borderColor = 'var(--good)';
-    setTimeout(() => item.style.borderColor = '', 600);
+  btnFire.addEventListener('click', async () => {
+    try {
+      await api.fireCue(cue.id);
+      item.style.borderColor = 'var(--good)';
+      setTimeout(() => item.style.borderColor = '', 600);
+    } catch (e) {
+      console.warn('fireCue failed:', e);
+    }
   });
-
-  const btnEdit = document.createElement('button');
-  btnEdit.className = 'btn btn--icon';
-  btnEdit.title = 'Edit';
-  btnEdit.textContent = '✏️';
-  btnEdit.addEventListener('click', () => _showEditDialog(cue, list));
 
   const btnDel = document.createElement('button');
   btnDel.className = 'btn btn--icon btn--danger';
@@ -80,7 +78,7 @@ function _makeItem(cue, list) {
     _render(list);
   });
 
-  actions.append(btnFire, btnEdit, btnDel);
+  actions.append(btnFire, btnDel);
   item.append(name, actions);
   return item;
 }
@@ -88,15 +86,7 @@ function _makeItem(cue, list) {
 function _showCreateDialog(list) {
   const name = prompt('Cue name:');
   if (name === null) return;
-  api.createCue({ name: name || 'New Cue' })
+  api.createCue({ name: name.trim() || 'Cue' })
     .then(() => _render(list))
-    .catch(console.warn);
-}
-
-function _showEditDialog(cue, list) {
-  const name = prompt('Rename cue:', cue.name || '');
-  if (name === null) return;
-  api.updateCue(cue.id, { name })
-    .then(() => _render(list))
-    .catch(console.warn);
+    .catch(e => { console.warn('createCue failed:', e); alert('Failed to create cue.'); });
 }

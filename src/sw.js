@@ -2,7 +2,7 @@
 // Caches all app files on install so the UI loads offline.
 // API calls (/api/*) are never cached — always need live ESP.
 
-const CACHE = 'minihead-v1';
+const CACHE = 'minihead-v2';
 
 const APP_FILES = [
   '/',
@@ -42,11 +42,18 @@ self.addEventListener('activate', e => {
 });
 
 // Fetch strategy:
-//   /api/*  → network only (never cache)
-//   rest    → cache first, fallback to network
+//   /api/*      → network only (never cache)
+//   navigate    → always serve cached index.html (works after server is gone)
+//   rest        → cache first, fallback to network
 self.addEventListener('fetch', e => {
   if (e.request.url.includes('/api/')) {
     e.respondWith(fetch(e.request));
+    return;
+  }
+  if (e.request.mode === 'navigate') {
+    e.respondWith(
+      caches.match('/index.html').then(r => r || fetch(e.request))
+    );
     return;
   }
   e.respondWith(
