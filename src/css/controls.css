@@ -1,0 +1,327 @@
+/* controls.css — faders, color channels, action buttons */
+
+/* ── RGBW fader group ─────────────────────────────────────────── */
+
+.fader-group {
+  display: flex;
+  gap: 10px;
+  padding: 0 16px;
+  height: 220px;
+  align-items: flex-end;
+}
+
+.fader-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+}
+
+.fader-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.fader-value {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+  min-width: 24px;
+  text-align: center;
+}
+
+.fader-track {
+  flex: 1;
+  width: 100%;
+  position: relative;
+  border-radius: 6px;
+  background: var(--surface2);
+  touch-action: none;
+  cursor: pointer;
+  min-height: 120px;
+}
+
+.fader-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border-radius: 6px;
+  transition: height 0.05s;
+  min-height: 4px;
+}
+
+.fader-thumb {
+  position: absolute;
+  left: 50%;
+  transform: translate(-50%, 50%);
+  width: 28px;
+  height: 10px;
+  background: rgba(255,255,255,0.8);
+  border-radius: 3px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+  pointer-events: none;
+}
+
+/* Channel colors */
+.fader-wrap[data-ch="R"] .fader-fill { background: #e53e3e; }
+.fader-wrap[data-ch="G"] .fader-fill { background: #38a169; }
+.fader-wrap[data-ch="B"] .fader-fill { background: #4299e1; }
+.fader-wrap[data-ch="W"] .fader-fill { background: #ecc94b; }
+
+/* ── Pan / Tilt horizontal faders ─────────────────────────────── */
+
+.hfader-wrap {
+  padding: 0 16px 6px;
+}
+
+.hfader-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 4px;
+}
+
+.hfader-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.hfader-value {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+}
+
+.hfader-track {
+  height: 44px;
+  background: var(--surface2);
+  border-radius: 8px;
+  position: relative;
+  touch-action: none;
+  cursor: pointer;
+}
+
+.hfader-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: var(--accent);
+  border-radius: 8px;
+  opacity: 0.5;
+  min-width: 4px;
+  transition: width 0.05s;
+}
+
+.hfader-thumb {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 10px;
+  height: 30px;
+  background: rgba(255,255,255,0.9);
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+  pointer-events: none;
+}
+
+/* ── Action buttons row ───────────────────────────────────────── */
+
+.action-row {
+  display: flex;
+  gap: 8px;
+  padding: 0 16px;
+  flex-wrap: wrap;
+}
+
+.action-row .btn {
+  flex: 1;
+  min-width: 80px;
+}
+
+.btn--active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+/* ── Speed slider ─────────────────────────────────────────────── */
+
+.speed-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+}
+
+.speed-row input[type="range"] {
+  flex: 1;
+  accent-color: var(--accent);
+  height: 44px;
+}
+
+.speed-val {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  min-width: 36px;
+  color: var(--text-dim);
+}
+
+/* ── Target chips ─────────────────────────────────────────────── */
+
+.target-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 4px 16px 0;
+}
+
+.chip {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--surface2);
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  display: inline-flex;
+  align-items: center;
+  user-select: none;
+}
+
+.chip.selected {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+/* ── Head cards (Heads screen) ───────────────────────────────── */
+
+.head-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin: 0 16px 10px;
+  overflow: hidden;
+}
+
+.head-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  min-height: 60px;
+}
+
+.head-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.head-status-dot.online  { background: var(--good); }
+.head-status-dot.offline { background: var(--danger); }
+
+.head-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.head-name {
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.head-meta {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.head-card-expand {
+  padding: 0 14px 14px;
+  border-top: 1px solid var(--border);
+}
+
+/* ── Cue list ─────────────────────────────────────────────────── */
+
+.cue-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin: 0 16px 8px;
+  min-height: 56px;
+}
+
+.cue-name {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.cue-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.btn--icon {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+/* ── Sequencer ────────────────────────────────────────────────── */
+
+.seq-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  margin: 0 16px 6px;
+}
+
+.seq-step.active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+}
+
+.seq-step-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--surface2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+.seq-step.active .seq-step-num {
+  background: var(--accent);
+  color: #fff;
+}

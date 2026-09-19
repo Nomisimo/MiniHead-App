@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ff6b00">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="MiniHead">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <title>MiniHead</title>
+  <link rel="stylesheet" href="/css/app.css">
+  <link rel="stylesheet" href="/css/layout.css">
+  <link rel="stylesheet" href="/css/controls.css">
+</head>
+<body>
+
+  <!-- ── Connect screen ─────────────────────────────── -->
+  <div id="screen-connect" class="screen" hidden>
+    <div class="connect-wrap">
+      <img src="/icons/icon-192.png" class="connect-logo" alt="MiniHead">
+      <h1>MiniHead</h1>
+      <p id="connect-status">Searching for MiniHead…</p>
+      <div class="connect-manual" hidden>
+        <input id="connect-ip" type="text" inputmode="url"
+               placeholder="192.168.1.42 or minihead.local">
+        <button id="connect-btn">Connect</button>
+      </div>
+      <p class="connect-hint" hidden id="connect-ios-hint">
+        Tip: Open in Safari → Share → Add to Home Screen
+      </p>
+    </div>
+  </div>
+
+  <!-- ── App shell (shown after connect) ───────────── -->
+  <div id="app" hidden>
+
+    <!-- Disconnected banner -->
+    <div id="banner-disconnected" class="banner banner--warn" hidden>
+      Disconnected — retrying…
+    </div>
+
+    <!-- Screen: Controls -->
+    <div id="screen-controls" class="screen screen--app" hidden>
+      <!-- built by controls.js -->
+    </div>
+
+    <!-- Screen: Heads -->
+    <div id="screen-heads" class="screen screen--app" hidden>
+      <!-- built by heads.js -->
+    </div>
+
+    <!-- Screen: Cues -->
+    <div id="screen-cues" class="screen screen--app" hidden>
+      <!-- built by cues.js -->
+    </div>
+
+    <!-- Screen: Sequencer -->
+    <div id="screen-sequencer" class="screen screen--app" hidden>
+      <!-- built by sequencer.js -->
+    </div>
+
+    <!-- Bottom navigation -->
+    <nav id="bottom-nav">
+      <button class="nav-btn" data-screen="controls">
+        <span class="nav-icon">⚡</span>
+        <span>Control</span>
+      </button>
+      <button class="nav-btn" data-screen="heads">
+        <span class="nav-icon">💡</span>
+        <span>Heads</span>
+      </button>
+      <button class="nav-btn" data-screen="cues">
+        <span class="nav-icon">📋</span>
+        <span>Cues</span>
+      </button>
+      <button class="nav-btn" data-screen="sequencer">
+        <span class="nav-icon">▶</span>
+        <span>Seq</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <script type="module" src="/js/main.js"></script>
+</body>
+</html>
