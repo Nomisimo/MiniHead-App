@@ -1,7 +1,7 @@
 // Service Worker — MiniHead PWA
 // Cache-first for app shell. API calls always go to network.
 
-const CACHE = 'minihead-v5';
+const CACHE = 'minihead-v6';
 
 const APP_FILES = [
   '/',
@@ -18,6 +18,7 @@ const APP_FILES = [
   '/js/heads.js',
   '/js/cues.js',
   '/js/sequencer.js',
+  '/js/artnet.js',
 ];
 
 // Take over immediately so the old SW stops handling requests ASAP.

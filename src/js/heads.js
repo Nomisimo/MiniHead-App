@@ -1,8 +1,12 @@
-// heads.js — head list with individual control and identify
+// heads.js — head list with individual control, identify, fixID and manual add
 import { api } from './api.js';
 import { createVerticalFader, createHorizontalFader } from './fader.js';
 
-let _expanded = null; // mac of currently expanded head
+let _expanded   = null;
+let _manualIPs  = [];
+let _list       = null;
+
+try { _manualIPs = JSON.parse(localStorage.getItem('minihead_manual_ips') || '[]'); } catch (_) {}
 
 export function initHeads() {
   const screen = document.getElementById('screen-heads');
@@ -12,22 +16,51 @@ export function initHeads() {
   header.className = 'screen-header';
   header.innerHTML = '<h2 class="screen-title">Heads</h2>';
 
-  const list = document.createElement('div');
-  list.id = 'heads-list';
+  const btnAdd = document.createElement('button');
+  btnAdd.className = 'btn';
+  btnAdd.textContent = '+ Add IP';
+  btnAdd.addEventListener('click', async () => {
+    const ip = prompt('Head IP address (e.g. 192.168.1.42):');
+    if (!ip) return;
+    const clean = ip.trim().replace(/^https?:\/\//, '');
+    if (!_manualIPs.includes(clean)) {
+      _manualIPs.push(clean);
+      try { localStorage.setItem('minihead_manual_ips', JSON.stringify(_manualIPs)); } catch (_) {}
+    }
+    _render(_list);
+  });
+  header.appendChild(btnAdd);
 
-  screen.append(header, list);
-  _render(list);
-  setInterval(() => _render(list), 5000);
+  _list = document.createElement('div');
+  _list.id = 'heads-list';
+
+  screen.append(header, _list);
+  _render(_list);
+  setInterval(() => _render(_list), 8000);
+
+  window.addEventListener('screen-shown', e => {
+    if (e.detail.screen === 'heads') _render(_list);
+  });
 }
 
 async function _render(list) {
   let heads = [];
   try {
     const data = await api.heads();
-    heads = data.heads || data || [];
+    heads = Array.isArray(data) ? data : (data.heads || []);
   } catch (_) {
-    list.innerHTML = '<p class="empty-state">Could not reach ESP.</p>';
-    return;
+    if (_manualIPs.length === 0) {
+      list.innerHTML = '<p class="empty-state">Could not reach ESP.</p>';
+      return;
+    }
+  }
+
+  // Merge manually-added IPs not already in the API response
+  const knownIPs = new Set(heads.map(h => h.ip));
+  for (const ip of _manualIPs) {
+    if (!knownIPs.has(ip)) {
+      heads.push({ ip, mac: ip, name: ip, online: false, _manual: true });
+    }
   }
 
   if (heads.length === 0) {
@@ -35,7 +68,6 @@ async function _render(list) {
     return;
   }
 
-  // Preserve expanded state across re-renders
   list.innerHTML = '';
   heads.forEach(h => list.appendChild(_makeCard(h)));
 }
@@ -48,7 +80,6 @@ function _makeCard(h) {
   const card = document.createElement('div');
   card.className = 'head-card';
 
-  // Header row
   const hdr = document.createElement('div');
   hdr.className = 'head-card-header';
 
@@ -58,12 +89,12 @@ function _makeCard(h) {
   const info = document.createElement('div');
   info.className = 'head-card-info';
   info.innerHTML = `<div class="head-name">${h.name || mac}</div>
-    <div class="head-meta">${h.ip || mac} · Fix ${h.fixID ?? '–'} · ${isLeader ? 'Leader' : 'Follower'}</div>`;
+    <div class="head-meta">${h.ip || mac} · Fix ${h.fixID ?? '–'} · ${h._manual ? 'Manual' : isLeader ? 'Leader' : 'Follower'}</div>`;
 
   const btnID = document.createElement('button');
   btnID.className = 'btn btn--icon';
   btnID.title = 'Identify';
-  btnID.textContent = '⚡';
+  btnID.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/></svg>`;
   btnID.addEventListener('click', e => {
     e.stopPropagation();
     api.identify(mac).catch(console.warn);
@@ -73,23 +104,34 @@ function _makeCard(h) {
   hdr.append(dot, info, btnID);
   card.appendChild(hdr);
 
-  // Toggle expand on header click
   hdr.addEventListener('click', () => {
-    const expand = card.querySelector('.head-card-expand');
+    const existing = card.querySelector('.head-card-expand');
     if (_expanded === mac) {
       _expanded = null;
-      expand.remove();
+      if (existing) existing.remove();
     } else {
       _expanded = mac;
-      // Remove any other open expand
       document.querySelectorAll('.head-card-expand').forEach(el => el.remove());
       card.appendChild(_makeExpand(h, mac));
     }
   });
 
-  // Restore expand if it was open
-  if (_expanded === mac) {
-    card.appendChild(_makeExpand(h, mac));
+  if (_expanded === mac) card.appendChild(_makeExpand(h, mac));
+
+  // Remove button for manually-added heads
+  if (h._manual) {
+    const btnRemove = document.createElement('button');
+    btnRemove.className = 'btn btn--icon btn--danger';
+    btnRemove.title = 'Remove';
+    btnRemove.innerHTML = '×';
+    btnRemove.style.cssText = 'font-size:18px;line-height:1';
+    btnRemove.addEventListener('click', e => {
+      e.stopPropagation();
+      _manualIPs = _manualIPs.filter(ip => ip !== h.ip);
+      try { localStorage.setItem('minihead_manual_ips', JSON.stringify(_manualIPs)); } catch (_) {}
+      _render(_list);
+    });
+    hdr.insertBefore(btnRemove, btnID);
   }
 
   return card;
@@ -102,15 +144,15 @@ function _makeExpand(h, mac) {
   // Name editor
   const nameRow = document.createElement('div');
   nameRow.className = 'row';
-  nameRow.style.cssText = 'padding: 10px 0 4px; gap: 8px;';
+  nameRow.style.cssText = 'padding:10px 0 4px;gap:8px;';
 
   const nameInput = document.createElement('input');
-  nameInput.type = 'text';
+  nameInput.type        = 'text';
   nameInput.placeholder = 'Name';
-  nameInput.value = h.name || '';
+  nameInput.value       = h.name || '';
 
   const nameBtn = document.createElement('button');
-  nameBtn.className = 'btn';
+  nameBtn.className   = 'btn';
   nameBtn.textContent = 'Save';
   nameBtn.style.flexShrink = '0';
   nameBtn.addEventListener('click', () => {
@@ -119,7 +161,35 @@ function _makeExpand(h, mac) {
 
   nameRow.append(nameInput, nameBtn);
 
-  // Individual faders
+  // Fix ID editor
+  const fixRow = document.createElement('div');
+  fixRow.className = 'row';
+  fixRow.style.cssText = 'padding:4px 0;gap:8px;';
+
+  const fixLabel = document.createElement('label');
+  fixLabel.textContent = 'Fix ID';
+  fixLabel.style.cssText = 'flex:1;font-size:14px;color:var(--text-dim)';
+
+  const fixInput = document.createElement('input');
+  fixInput.type        = 'number';
+  fixInput.placeholder = '1';
+  fixInput.value       = h.fixID || '';
+  fixInput.min         = '1';
+  fixInput.max         = '255';
+  fixInput.style.width = '72px';
+
+  const fixBtn = document.createElement('button');
+  fixBtn.className   = 'btn';
+  fixBtn.textContent = 'Set';
+  fixBtn.style.flexShrink = '0';
+  fixBtn.addEventListener('click', () => {
+    const id = parseInt(fixInput.value);
+    if (id > 0) api.setFixID(mac, id).catch(console.warn);
+  });
+
+  fixRow.append(fixLabel, fixInput, fixBtn);
+
+  // Individual RGBW faders
   const colorLabel = document.createElement('div');
   colorLabel.className = 'section-label';
   colorLabel.style.padding = '10px 0 4px';
@@ -127,7 +197,7 @@ function _makeExpand(h, mac) {
 
   const faderGroup = document.createElement('div');
   faderGroup.className = 'fader-group';
-  faderGroup.style.cssText = 'padding: 0; height: 160px;';
+  faderGroup.style.cssText = 'padding:0;height:160px;';
 
   let sendPending = null;
   const sendColor = () => {
@@ -147,7 +217,7 @@ function _makeExpand(h, mac) {
   faderGroup.append(fR, fG, fB, fW);
 
   const fPan  = createHorizontalFader({
-    label: 'Pan', value: 135, min: 0, max: 270, unit: '°',
+    label: 'Pan',  value: 135, min: 0, max: 270, unit: '°',
     onChange: v => api.send(`PAN:${v}`, [mac]).catch(console.warn)
   });
   const fTilt = createHorizontalFader({
@@ -155,6 +225,6 @@ function _makeExpand(h, mac) {
     onChange: v => api.send(`TILT:${v}`, [mac]).catch(console.warn)
   });
 
-  expand.append(nameRow, colorLabel, faderGroup, fPan, fTilt);
+  expand.append(nameRow, fixRow, colorLabel, faderGroup, fPan, fTilt);
   return expand;
 }

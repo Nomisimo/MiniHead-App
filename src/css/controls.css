@@ -289,6 +289,50 @@
   font-size: 16px;
 }
 
+/* ── Store Cue button ─────────────────────────────────────────── */
+
+.store-cue-btn {
+  margin: 0 16px;
+}
+
+.btn--full {
+  width: calc(100% - 32px);
+  display: block;
+}
+
+/* ── ArtNet screen ────────────────────────────────────────────── */
+
+.badge {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-left: auto;
+}
+
+.badge--good { background: color-mix(in srgb, var(--good) 18%, transparent); color: var(--good); }
+.badge--dim  { background: var(--surface2); color: var(--text-dim); }
+
+.artnet-vals {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.artnet-val {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  background: var(--surface2);
+  border-radius: 6px;
+  padding: 3px 8px;
+  color: var(--text);
+}
+
+.artnet-patch-row {}
+
 /* ── Sequencer ────────────────────────────────────────────────── */
 
 .seq-step {

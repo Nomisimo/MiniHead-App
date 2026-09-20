@@ -61,23 +61,48 @@
       <!-- built by sequencer.js -->
     </div>
 
+    <!-- Screen: ArtNet -->
+    <div id="screen-artnet" class="screen screen--app" hidden>
+      <!-- built by artnet.js -->
+    </div>
+
     <!-- Bottom navigation -->
     <nav id="bottom-nav">
       <button class="nav-btn" data-screen="controls">
-        <span class="nav-icon">⚡</span>
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/>
+        </svg>
         <span>Control</span>
       </button>
       <button class="nav-btn" data-screen="heads">
-        <span class="nav-icon">💡</span>
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="9" r="4"/>
+          <line x1="12" y1="13" x2="12" y2="17"/>
+          <line x1="9"  y1="20" x2="15" y2="20"/>
+        </svg>
         <span>Heads</span>
       </button>
       <button class="nav-btn" data-screen="cues">
-        <span class="nav-icon">📋</span>
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" xmlns="http://www.w3.org/2000/svg">
+          <line x1="4" y1="7"  x2="20" y2="7"/>
+          <line x1="4" y1="12" x2="20" y2="12"/>
+          <line x1="4" y1="17" x2="20" y2="17"/>
+        </svg>
         <span>Cues</span>
       </button>
       <button class="nav-btn" data-screen="sequencer">
-        <span class="nav-icon">▶</span>
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="5,3 19,12 5,21"/>
+        </svg>
         <span>Seq</span>
+      </button>
+      <button class="nav-btn" data-screen="artnet">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="2" y1="12" x2="22" y2="12"/>
+          <path d="M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/>
+        </svg>
+        <span>ArtNet</span>
       </button>
     </nav>
 

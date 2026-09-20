@@ -2,6 +2,8 @@
 // Note: firmware PUT /api/cues/* only updates fixTargets — rename not supported.
 import { api } from './api.js';
 
+let _list = null;
+
 export function initCues() {
   const screen = document.getElementById('screen-cues');
   screen.innerHTML = '';
@@ -13,14 +15,18 @@ export function initCues() {
   const addBtn = document.createElement('button');
   addBtn.className = 'btn btn--primary';
   addBtn.textContent = '+ New';
-  addBtn.addEventListener('click', () => _showCreateDialog(list));
+  addBtn.addEventListener('click', () => _showCreateDialog(_list));
   header.appendChild(addBtn);
 
-  const list = document.createElement('div');
-  list.id = 'cue-list';
+  _list = document.createElement('div');
+  _list.id = 'cue-list';
 
-  screen.append(header, list);
-  _render(list);
+  screen.append(header, _list);
+  _render(_list);
+
+  window.addEventListener('screen-shown', e => {
+    if (e.detail.screen === 'cues') _render(_list);
+  });
 }
 
 async function _render(list) {

@@ -74,6 +74,14 @@ export const api = {
     _fetch('POST', '/api/sequencer/start', { cue_ids: cueIds, interval_ms: intervalMs, loop }),
   seqStop:    ()        => _fetch('POST', '/api/sequencer/stop'),
   seqStatus:  ()        => _fetch('GET',  '/api/sequencer/status'),
+
+  // ArtNet
+  artnetStatus:     ()                    => _fetch('GET',  '/api/artnet/status'),
+  artnetGetPatch:   ()                    => _fetch('GET',  '/api/artnet/patch'),
+  artnetSavePatch:  (universe, startAddr) => _fetch('POST', '/api/artnet/patch', { universe, startAddr }),
+  artnetUpdatePatch:(universe, startAddr) => _fetch('PUT',  '/api/artnet/patch/0', { universe, startAddr }),
+  artnetDeletePatch:()                    => _fetch('DELETE','/api/artnet/patch/0'),
+  artnetBulkPatch:  (data)               => _fetch('POST', '/api/artnet/patch/bulk', data),
 };
 
 // --- Connection helpers ---

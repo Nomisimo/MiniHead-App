@@ -6,6 +6,7 @@ import { initControls }     from './controls.js';
 import { initHeads }        from './heads.js';
 import { initCues }         from './cues.js';
 import { initSequencer }    from './sequencer.js';
+import { initArtnet }       from './artnet.js';
 
 // ── Error overlay — shows uncaught JS errors on device (debug) ────
 window.addEventListener('error', e => {
@@ -31,7 +32,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // ── Router ────────────────────────────────────────────────────────
-const screens = ['controls', 'heads', 'cues', 'sequencer'];
+const screens = ['controls', 'heads', 'cues', 'sequencer', 'artnet'];
 
 export function showScreen(name) {
   screens.forEach(s => {
@@ -42,6 +43,7 @@ export function showScreen(name) {
   document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.screen === name);
   });
+  window.dispatchEvent(new CustomEvent('screen-shown', { detail: { screen: name } }));
 }
 
 // ── Boot ──────────────────────────────────────────────────────────
@@ -69,6 +71,7 @@ async function boot() {
   initHeads();
   initCues();
   initSequencer();
+  initArtnet();
 
   try {
     await autoConnect();

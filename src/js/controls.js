@@ -2,14 +2,27 @@
 import { api } from './api.js';
 import { createVerticalFader, createHorizontalFader } from './fader.js';
 
-let _targets = ['*']; // '*' = all
+let _targets = ['*'];
 let _heads   = [];
+
+// Module-level fader refs — exposed via getControlState()
+let _faderR = null, _faderG = null, _faderB = null, _faderW = null;
+let _faderPan = null, _faderTilt = null;
+
+export function getControlState() {
+  if (!_faderR) return null;
+  return {
+    r: _faderR.getValue(), g: _faderG.getValue(),
+    b: _faderB.getValue(), w: _faderW.getValue(),
+    pan: _faderPan.getValue(), tilt: _faderTilt.getValue(),
+    targets: [..._targets],
+  };
+}
 
 export function initControls() {
   const screen = document.getElementById('screen-controls');
   screen.innerHTML = '';
 
-  // Header
   const header = document.createElement('div');
   header.className = 'screen-header';
   header.innerHTML = '<h2 class="screen-title">Control</h2>';
@@ -24,7 +37,7 @@ export function initControls() {
   chips.id = 'ctrl-chips';
   _renderChips(chips);
 
-  // RGBW section
+  // RGBW faders
   const rgbwLabel = document.createElement('div');
   rgbwLabel.className = 'section-label';
   rgbwLabel.textContent = 'Color';
@@ -32,16 +45,16 @@ export function initControls() {
   const faderGroup = document.createElement('div');
   faderGroup.className = 'fader-group';
 
-  const faderR = createVerticalFader({ label: 'R', value: 0, dataAttr: 'R', onChange: v => _sendColor() });
-  const faderG = createVerticalFader({ label: 'G', value: 0, dataAttr: 'G', onChange: v => _sendColor() });
-  const faderB = createVerticalFader({ label: 'B', value: 0, dataAttr: 'B', onChange: v => _sendColor() });
-  const faderW = createVerticalFader({ label: 'W', value: 0, dataAttr: 'W', onChange: v => _sendColor() });
+  _faderR = createVerticalFader({ label: 'R', value: 0, dataAttr: 'R', onChange: () => _sendColor() });
+  _faderG = createVerticalFader({ label: 'G', value: 0, dataAttr: 'G', onChange: () => _sendColor() });
+  _faderB = createVerticalFader({ label: 'B', value: 0, dataAttr: 'B', onChange: () => _sendColor() });
+  _faderW = createVerticalFader({ label: 'W', value: 0, dataAttr: 'W', onChange: () => _sendColor() });
 
-  faderGroup.append(faderR, faderG, faderB, faderW);
+  faderGroup.append(_faderR, _faderG, _faderB, _faderW);
 
   function _sendColor() {
-    const r = faderR.getValue(), g = faderG.getValue();
-    const b = faderB.getValue(), w = faderW.getValue();
+    const r = _faderR.getValue(), g = _faderG.getValue();
+    const b = _faderB.getValue(), w = _faderW.getValue();
     api.send(`R:${r},G:${g},B:${b},W:${w}`, _targets).catch(console.warn);
   }
 
@@ -50,11 +63,11 @@ export function initControls() {
   ptLabel.className = 'section-label';
   ptLabel.textContent = 'Position';
 
-  const faderPan  = createHorizontalFader({
+  _faderPan  = createHorizontalFader({
     label: 'Pan',  value: 135, min: 0, max: 270, unit: '°',
     onChange: v => api.send(`PAN:${v}`, _targets).catch(console.warn)
   });
-  const faderTilt = createHorizontalFader({
+  _faderTilt = createHorizontalFader({
     label: 'Tilt', value: 135, min: 0, max: 270, unit: '°',
     onChange: v => api.send(`TILT:${v}`, _targets).catch(console.warn)
   });
@@ -74,8 +87,8 @@ export function initControls() {
   btnBlackout.textContent = 'Blackout';
   btnBlackout.addEventListener('click', () => {
     api.blackout().catch(console.warn);
-    faderR.setValue(0); faderG.setValue(0);
-    faderB.setValue(0); faderW.setValue(0);
+    _faderR.setValue(0); _faderG.setValue(0);
+    _faderB.setValue(0); _faderW.setValue(0);
   });
 
   const btnRainbow = document.createElement('button');
@@ -98,6 +111,36 @@ export function initControls() {
 
   actionRow.append(btnBlackout, btnRainbow, btnDemo);
 
+  // Store Cue
+  const btnStore = document.createElement('button');
+  btnStore.className = 'btn btn--full store-cue-btn';
+  btnStore.textContent = '+ Store as Cue';
+  btnStore.addEventListener('click', async () => {
+    const name = prompt('Cue name:');
+    if (name === null) return;
+
+    const r = _faderR.getValue(), g = _faderG.getValue();
+    const b = _faderB.getValue(), w = _faderW.getValue();
+    const pan = _faderPan.getValue(), tilt = _faderTilt.getValue();
+
+    // Convert MAC targets → fixIDs (cue system uses integer fixIDs)
+    let fixTargets = [0]; // 0 = all
+    if (!_targets.includes('*') && _targets.length > 0) {
+      const ids = _targets
+        .map(mac => { const h = _heads.find(h => (h.mac || h.ip) === mac); return h ? (h.fixID || 0) : 0; })
+        .filter(id => id > 0);
+      if (ids.length > 0) fixTargets = ids;
+    }
+
+    try {
+      await api.createCue({ name: name.trim() || 'Cue', r, g, b, w, pan, tilt, fixTargets });
+      btnStore.textContent = '✓ Stored';
+      setTimeout(() => { btnStore.textContent = '+ Store as Cue'; }, 1500);
+    } catch (e) {
+      alert('Could not store cue: ' + e.message);
+    }
+  });
+
   // Speed
   const speedLabel = document.createElement('div');
   speedLabel.className = 'section-label';
@@ -107,14 +150,14 @@ export function initControls() {
   speedRow.className = 'speed-row';
 
   const speedInput = document.createElement('input');
-  speedInput.type = 'range';
-  speedInput.min  = '0.1';
-  speedInput.max  = '3.0';
-  speedInput.step = '0.1';
+  speedInput.type  = 'range';
+  speedInput.min   = '0.1';
+  speedInput.max   = '3.0';
+  speedInput.step  = '0.1';
   speedInput.value = '1.0';
 
   const speedVal = document.createElement('span');
-  speedVal.className = 'speed-val';
+  speedVal.className   = 'speed-val';
   speedVal.textContent = '1.0×';
 
   speedInput.addEventListener('input', () => {
@@ -130,12 +173,12 @@ export function initControls() {
     header,
     chipsLabel, chips,
     rgbwLabel, faderGroup,
-    ptLabel, faderPan, faderTilt,
+    ptLabel, _faderPan, _faderTilt,
     actLabel, actionRow,
+    btnStore,
     speedLabel, speedRow
   );
 
-  // Refresh heads periodically for target chips
   _refreshHeads(chips);
   setInterval(() => _refreshHeads(chips), 5000);
 }
@@ -154,16 +197,13 @@ function _renderChips(chips) {
   const allChip = document.createElement('button');
   allChip.className = 'chip' + (_targets.includes('*') ? ' selected' : '');
   allChip.textContent = 'All';
-  allChip.addEventListener('click', () => {
-    _targets = ['*'];
-    _renderChips(chips);
-  });
+  allChip.addEventListener('click', () => { _targets = ['*']; _renderChips(chips); });
   chips.appendChild(allChip);
 
   _heads.forEach(h => {
     const chip = document.createElement('button');
     const mac  = h.mac || h.ip;
-    chip.className = 'chip' + (_targets.includes(mac) ? ' selected' : '');
+    chip.className   = 'chip' + (_targets.includes(mac) ? ' selected' : '');
     chip.textContent = h.name || mac;
     chip.addEventListener('click', () => {
       if (_targets.includes('*')) _targets = [];

@@ -2,6 +2,7 @@
 import { api } from './api.js';
 
 let _pollTimer = null;
+let _cueList   = null;
 
 export function initSequencer() {
   const screen = document.getElementById('screen-sequencer');
@@ -58,9 +59,14 @@ export function initSequencer() {
   statusBar.id = 'seq-status';
   statusBar.style.cssText = 'text-align:center;font-size:12px;color:var(--text-dim);padding:8px 16px;';
 
+  _cueList = cueList;
   screen.append(header, card, btnRow, cueLabel, cueList, statusBar);
 
   _loadCues(cueList);
+
+  window.addEventListener('screen-shown', e => {
+    if (e.detail.screen === 'sequencer') _loadCues(_cueList);
+  });
 
   btnStart.addEventListener('click', async () => {
     const status = await api.seqStatus().catch(() => null);
