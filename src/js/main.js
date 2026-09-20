@@ -9,6 +9,9 @@ import { initSequencer }    from './sequencer.js';
 
 // ── Error overlay — shows uncaught JS errors on device (debug) ────
 window.addEventListener('error', e => {
+  // "Script error." with no filename/lineno = iOS Safari browser-internal error
+  // (e.g. share sheet snapshot, SW context) — not our code, ignore it.
+  if (!e.filename && !e.lineno) return;
   const el = document.createElement('div');
   el.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#c00;color:#fff;padding:12px;font-size:13px;z-index:9999;white-space:pre-wrap;word-break:break-all';
   el.textContent = `JS ERROR: ${e.message}\n${e.filename}:${e.lineno}`;
