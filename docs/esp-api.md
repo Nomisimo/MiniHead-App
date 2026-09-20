@@ -60,10 +60,13 @@ All known heads including this node. Role is `"LEADER"` or `"FOLLOWER"`.
 Fixture→head mapping.
 
 ### `POST /api/heads/:mac/identify`
-Flashes the head's LED white briefly so you can find it physically. No body.
+Flashes the head's LED white briefly so you can find it physically.
 ```json
-{ "status": "ok" }
+{ "on": true }
 ```
+Response: `{ "status": "ok" }`
+
+Send `{ "on": false }` to stop the flash early.
 
 ### `POST /api/heads/:mac/name`
 ```json
@@ -158,7 +161,7 @@ Create cue.
 ```
 Returns `{ "status": "ok", "cue": { ...full cue object... } }`
 
-### `POST /api/cues/:id`
+### `POST /api/cues/:id/fire`
 Fire cue — sends it to all its target heads immediately. No body.
 ```json
 { "status": "ok", "command": "fired", "response": "OK" }
@@ -199,6 +202,64 @@ No body.
 ```json
 { "running": true }
 ```
+
+---
+
+---
+
+## ArtNet
+
+> Requires `PLUGIN_ARTNET` enabled in `config.h`. Each ESP stores its own patch only.
+
+### `GET /api/artnet/status`
+Live Art-Net receiver state.
+```json
+{
+  "active": true,
+  "patchCount": 1,
+  "r": 0, "g": 128, "b": 255, "w": 0,
+  "pan": 135, "tilt": 90
+}
+```
+`active` is `true` when Art-Net frames are being received. The RGBW/pan/tilt values reflect the last received DMX channel values for this node.
+
+### `GET /api/artnet/patch`
+This node's current patch.
+```json
+[{ "fixID": 1, "universe": 0, "startAddr": 1 }]
+```
+Returns an array with 0 or 1 entries (each ESP stores exactly one patch).
+
+### `POST /api/artnet/patch`
+Set (or replace) this node's patch.
+```json
+{ "universe": 0, "startAddr": 1 }
+```
+`universe`: 0–32767. `startAddr`: 1–(512 − DMX_FOOTPRINT + 1). `fixID` is accepted but ignored (the ESP always uses its own `ownFixID`).
+
+### `PUT /api/artnet/patch/0`
+Update fields of the existing patch.
+```json
+{ "universe": 1, "startAddr": 9 }
+```
+Either field is optional.
+
+### `DELETE /api/artnet/patch/0`
+Clear this node's patch.
+
+### `POST /api/artnet/patch/bulk`
+Auto-assign patches to a range of fixtures. Each ESP applies only the slice matching its own `fixID`.
+
+The **app handles sending to each ESP individually** — this is not a broadcast.
+```json
+{
+  "universe": 0,
+  "startAddr": 1,
+  "count": 8,
+  "firstFixID": 1
+}
+```
+The ESP calculates its own address: `startAddr + (ownFixID - firstFixID) * DMX_FOOTPRINT`, rolling over universe boundaries at 512 channels.
 
 ---
 
