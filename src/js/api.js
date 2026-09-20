@@ -89,8 +89,23 @@ export const api = {
 const STORAGE_KEY = 'minihead_ip';
 const MDNS_HOST   = 'http://minihead.local';
 
-// Try to connect: saved IP → mDNS → fail
+// Try to connect: ESP origin (when app served from ESP) → saved IP → mDNS → fail
 export async function autoConnect() {
+  // When the app is loaded from the ESP itself (not the local dev server on :8080),
+  // try the page's own origin first — it IS the ESP.
+  const origin = window.location.origin;
+  const isDevServer = window.location.port === '8080' ||
+                      window.location.hostname === 'localhost' ||
+                      window.location.hostname === '127.0.0.1';
+  if (!isDevServer) {
+    setBaseUrl(origin);
+    try {
+      await api.status();
+      localStorage.setItem(STORAGE_KEY, origin);
+      return origin;
+    } catch (_) {}
+  }
+
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) {
     setBaseUrl(saved);
