@@ -83,6 +83,14 @@
 
   </div>
 
-  <script type="module" src="/js/main.js"></script>
+  <script type="module">
+    // Dynamic import gives real error messages on iOS Safari (static imports sanitize to "Script error.")
+    import('/js/main.js').catch(err => {
+      const el = document.createElement('div');
+      el.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#c00;color:#fff;padding:12px;font-size:13px;z-index:9999;white-space:pre-wrap;word-break:break-all;word-wrap:break-word';
+      el.textContent = 'LOAD ERROR: ' + (err && err.message ? err.message : String(err)) + '\n' + (err && err.stack ? err.stack : '');
+      document.body.appendChild(el);
+    });
+  </script>
 </body>
 </html>

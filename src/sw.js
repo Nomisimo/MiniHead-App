@@ -1,7 +1,7 @@
 // Service Worker — MiniHead PWA
 // Cache-first for app shell. API calls always go to network.
 
-const CACHE = 'minihead-v4';
+const CACHE = 'minihead-v5';
 
 const APP_FILES = [
   '/',
@@ -20,10 +20,10 @@ const APP_FILES = [
   '/js/sequencer.js',
 ];
 
-// Pre-cache: fetch each file individually and store manually.
-// cache.add() rejects on ANY error — instead, fetch + put so a
-// 404 icon never kills the whole install.
+// Take over immediately so the old SW stops handling requests ASAP.
+// Background-cache all app files after claiming.
 self.addEventListener('install', e => {
+  self.skipWaiting();
   e.waitUntil(
     caches.open(CACHE).then(cache =>
       Promise.all(
@@ -33,7 +33,7 @@ self.addEventListener('install', e => {
             .catch(() => {})
         )
       )
-    ).then(() => self.skipWaiting())
+    )
   );
 });
 
@@ -49,13 +49,12 @@ self.addEventListener('activate', e => {
 });
 
 // Fetch strategy:
-//   /api/*   → network only, return empty 503 on failure
-//   all else → cache first; fallback to network; navigate falls back to index.html
+//   /api/*   → network only, return 503 JSON on failure
+//   all else → cache first; on network miss re-cache; offline: index.html for navigate
 self.addEventListener('fetch', e => {
   const { request } = e;
   const url = request.url;
 
-  // Never cache API calls
   if (url.includes('/api/')) {
     e.respondWith(
       fetch(request).catch(() =>
@@ -68,26 +67,26 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // Cache-first for all app shell files
   e.respondWith(
-    caches.open(CACHE).then(cache =>
-      cache.match(request).then(cached => {
-        if (cached) return cached;
+    caches.open(CACHE).then(async cache => {
+      const cached = await cache.match(request);
+      if (cached) return cached;
 
-        // Not in cache — try network and update cache
-        return fetch(request).then(res => {
-          if (res.ok) cache.put(request, res.clone());
-          return res;
-        }).catch(() => {
-          // Network failed — for navigation, serve index.html as fallback
-          if (request.mode === 'navigate') {
-            return cache.match('/index.html')
-              || cache.match('/')
-              || new Response('<h1>Offline</h1>', { headers: { 'Content-Type': 'text/html' } });
-          }
-          return new Response('', { status: 503 });
-        });
-      })
-    )
+      try {
+        const res = await fetch(request);
+        if (res.ok) cache.put(request, res.clone());
+        return res;
+      } catch (_) {
+        if (request.mode === 'navigate') {
+          const fallback = await cache.match('/index.html') || await cache.match('/');
+          return fallback || new Response('<h1>Offline</h1>', {
+            headers: { 'Content-Type': 'text/html' }
+          });
+        }
+        // For non-navigate (scripts, styles): propagate the error so the
+        // browser reports a clean network failure rather than a bad response.
+        throw _;
+      }
+    })
   );
 });
