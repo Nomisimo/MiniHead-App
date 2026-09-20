@@ -1,12 +1,14 @@
 // Service Worker — MiniHead PWA
 // Cache-first for app shell. API calls always go to network.
 
-const CACHE = 'minihead-v6';
+const CACHE = 'minihead-v7';
 
 const APP_FILES = [
   '/',
   '/index.html',
   '/manifest.json',
+  '/icons/icon-192.png',
+  '/icons/icon-512.png',
   '/css/app.css',
   '/css/layout.css',
   '/css/controls.css',
