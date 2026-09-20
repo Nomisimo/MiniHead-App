@@ -1,7 +1,7 @@
 // Service Worker — MiniHead PWA
-// Cache-first for app shell. API calls never cached.
+// Cache-first for app shell. API calls always go to network.
 
-const CACHE = 'minihead-v3';
+const CACHE = 'minihead-v4';
 
 const APP_FILES = [
   '/',
@@ -20,48 +20,74 @@ const APP_FILES = [
   '/js/sequencer.js',
 ];
 
-// Cache each file individually — a missing icon must not fail the whole install.
+// Pre-cache: fetch each file individually and store manually.
+// cache.add() rejects on ANY error — instead, fetch + put so a
+// 404 icon never kills the whole install.
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE).then(cache =>
-      Promise.all(APP_FILES.map(url =>
-        cache.add(url).catch(err => console.warn('[SW] cache miss:', url, err))
-      ))
-    )
+      Promise.all(
+        APP_FILES.map(url =>
+          fetch(url, { cache: 'no-cache' })
+            .then(res => { if (res.ok) return cache.put(url, res); })
+            .catch(() => {})
+        )
+      )
+    ).then(() => self.skipWaiting())
   );
-  self.skipWaiting();
 });
 
-// Remove old caches on activate
+// Delete old caches, claim all clients immediately.
 self.addEventListener('activate', e => {
   e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-    )
+    caches.keys()
+      .then(keys => Promise.all(
+        keys.filter(k => k !== CACHE).map(k => caches.delete(k))
+      ))
+      .then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
 // Fetch strategy:
-//   /api/*      → network only (never cache)
-//   navigate    → always serve cached index.html so app opens after server is gone
-//   rest        → cache first, fallback to network
+//   /api/*   → network only, return empty 503 on failure
+//   all else → cache first; fallback to network; navigate falls back to index.html
 self.addEventListener('fetch', e => {
-  if (e.request.url.includes('/api/')) {
-    e.respondWith(fetch(e.request).catch(() => new Response('', { status: 503 })));
-    return;
-  }
-  if (e.request.mode === 'navigate') {
+  const { request } = e;
+  const url = request.url;
+
+  // Never cache API calls
+  if (url.includes('/api/')) {
     e.respondWith(
-      caches.open(CACHE)
-        .then(cache => cache.match('/index.html'))
-        .then(r => r || fetch(e.request))
+      fetch(request).catch(() =>
+        new Response('{"error":"offline"}', {
+          status: 503,
+          headers: { 'Content-Type': 'application/json' }
+        })
+      )
     );
     return;
   }
+
+  // Cache-first for all app shell files
   e.respondWith(
-    caches.open(CACHE)
-      .then(cache => cache.match(e.request))
-      .then(cached => cached || fetch(e.request))
+    caches.open(CACHE).then(cache =>
+      cache.match(request).then(cached => {
+        if (cached) return cached;
+
+        // Not in cache — try network and update cache
+        return fetch(request).then(res => {
+          if (res.ok) cache.put(request, res.clone());
+          return res;
+        }).catch(() => {
+          // Network failed — for navigation, serve index.html as fallback
+          if (request.mode === 'navigate') {
+            return cache.match('/index.html')
+              || cache.match('/')
+              || new Response('<h1>Offline</h1>', { headers: { 'Content-Type': 'text/html' } });
+          }
+          return new Response('', { status: 503 });
+        });
+      })
+    )
   );
 });

@@ -17,17 +17,23 @@ export function getBaseUrl() {
 }
 
 // Core fetch wrapper — throws on network error or non-2xx response.
-async function _fetch(method, path, body) {
+async function _fetch(method, path, body, timeoutMs = 3000) {
   if (!_baseUrl) throw new Error('Not connected');
-  const opts = {
-    method,
-    headers: body ? { 'Content-Type': 'application/json' } : {},
-    body: body ? JSON.stringify(body) : undefined,
-    signal: AbortSignal.timeout(5000),
-  };
-  const res = await fetch(_baseUrl + path, opts);
-  if (!res.ok) throw new Error(`HTTP ${res.status} ${path}`);
-  return res.json();
+  const ctrl  = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const opts = {
+      method,
+      headers: body ? { 'Content-Type': 'application/json' } : {},
+      body:    body ? JSON.stringify(body) : undefined,
+      signal:  ctrl.signal,
+    };
+    const res = await fetch(_baseUrl + path, opts);
+    if (!res.ok) throw new Error(`HTTP ${res.status} ${path}`);
+    return res.json();
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 // --- API methods ---
