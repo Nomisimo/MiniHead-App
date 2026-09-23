@@ -1,0 +1,10 @@
+{
+  "name": "minihead-app",
+  "private": true,
+  "scripts": {
+    "build": "node build.js"
+  },
+  "devDependencies": {
+    "workbox-build": "^7.3.0"
+  }
+}
